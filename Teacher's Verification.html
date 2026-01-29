@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<title>Teacher Verification Slip</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+<style>
+body{ font-family: Arial, sans-serif; background:#f5f6fa; padding:20px; margin:0;}
+.container{ max-width:600px; margin:auto; background:#fff; padding:20px; border-radius:10px; box-shadow:0 4px 15px rgba(0,0,0,.1); }
+input,button{ width:100%; padding:10px; margin-top:10px; font-size:16px; border-radius:5px; border:1px solid #ccc; box-sizing:border-box; }
+button{ background:#0b5ed7; color:#fff; border:none; cursor:pointer; transition:0.3s; }
+button:hover{ background:#084298; }
+.result{ margin-top:20px; padding:15px; border-radius:8px; background:#f1f1f1; min-height:200px; word-wrap: break-word; }
+.verified-title{ font-family: monospace; font-size:22px; font-weight:bold; color:#28a745; overflow:hidden; white-space:nowrap; border-right: .15em solid #28a745; }
+table{ width:100%; border-collapse: collapse; margin-top:15px; }
+table th, table td{ border:1px solid #ddd; padding:10px; text-align:left; font-size:14px;}
+table th{ background:#0b5ed7; color:#fff; }
+.active{color:green;font-weight:bold;}
+.inactive{color:red;font-weight:bold;}
+.action-btns{ margin-top:15px; display:flex; gap:10px; flex-wrap:wrap;}
+.action-btns button{ flex:1; font-size:15px; }
+.timestamp{ margin-top:10px; font-size:13px; color:#555; font-style:italic; }
+
+/* PRINT STYLES */
+@media print {
+  body * { visibility: hidden; }
+  #printArea, #printArea * { visibility: visible; }
+  #printArea { position: absolute; top:0; left:0; width:100%; }
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+  <h3>Teacher Verification Slip</h3>
+  <input type="text" id="teacherId" placeholder="Teacher ID লিখুন">
+  <button onclick="verifyTeacher()">Verify</button>
+  <div id="output" class="result">🔹 এখানে Teacher ID লিখে Verify করুন</div>
+</div>
+
+<div id="printArea" style="display:none;"></div> <!-- Printable area -->
+
+<script>
+const { jsPDF } = window.jspdf;
+
+// ===== TEACHERS DATA =====
+const teachers = [
+  {id:"AHT2405", name:"শহিদুজ্জামান রাসেল", joinDate:"2024-11-02", designation:"সহকারী শিক্ষক ও কম্পিউটার ট্রেইনার", mobile:"01788112405", active:true},
+  {id:"T002", name:"ফাতেমা আক্তার", joinDate:"2020-07-20", designation:"প্রভাষক", mobile:"01887654321", active:true},
+  {id:"T003", name:"সালাহ উদ্দিন", joinDate:"2018-01-10", designation:"সিনিয়র শিক্ষক", mobile:"01911223344", active:false}
+];
+
+// ===== SERVICE AGE =====
+function serviceAge(joinDate){
+  const start=new Date(joinDate);
+  const today=new Date();
+  let y = today.getFullYear() - start.getFullYear();
+  let m = today.getMonth() - start.getMonth();
+  let d = today.getDate() - start.getDate();
+  if(d<0){ m--; d+=30; }
+  if(m<0){ y--; m+=12; }
+  return `${y} বছর ${m} মাস ${d} দিন`;
+}
+
+// ===== TYPEWRITER =====
+function typeWriter(text, element, callback){
+  element.textContent = "";
+  let i=0;
+  const interval = setInterval(()=>{
+    element.textContent += text.charAt(i);
+    i++;
+    if(i>=text.length){ clearInterval(interval); if(callback) callback(); }
+  },40);
+}
+
+// ===== VERIFY FUNCTION =====
+let currentTeacher = null;
+let currentTimestamp = "";
+function verifyTeacher(){
+  const id = document.getElementById("teacherId").value.trim();
+  const output = document.getElementById("output");
+  if(!id){ output.innerHTML="⚠️ Teacher ID লিখুন"; return; }
+
+  const t = teachers.find(x=>x.id===id);
+  if(!t){ output.innerHTML="❌ এই ID পাওয়া যায়নি"; return; }
+  currentTeacher = t;
+
+  const now = new Date();
+  currentTimestamp = now.toLocaleString('bn-BD', {hour12:false});
+
+  output.innerHTML = `<div class="verified-title" id="verifiedText"></div>`;
+  typeWriter("✅ VERIFIED TEACHER", document.getElementById("verifiedText"), ()=> {
+    output.innerHTML += `
+      <table>
+        <tr><th>ফিল্ড</th><th>মান</th></tr>
+        <tr><td>ID</td><td>${t.id}</td></tr>
+        <tr><td>নাম</td><td>${t.name}</td></tr>
+        <tr><td>পদবী</td><td>${t.designation}</td></tr>
+        <tr><td>যোগদানের তারিখ</td><td>${t.joinDate}</td></tr>
+        <tr><td>চাকরির বয়স</td><td>${serviceAge(t.joinDate)}</td></tr>
+        <tr><td>মোবাইল</td><td>${t.mobile}</td></tr>
+        <tr><td>বর্তমান অবস্থা</td><td class="${t.active?'active':'inactive'}">${t.active?'কর্মরত':'কর্মরত নয়'}</td></tr>
+      </table>
+      <div class="timestamp">ভেরিফিকেশনের তারিখ ও সময়: ${currentTimestamp}</div>
+      <div class="action-btns">
+        <button onclick="printSlip()">🖨️ Print</button>
+        <button onclick="downloadPDF()">📥 Download PDF</button>
+      </div>
+    `;
+  });
+}
+
+// ===== PRINT FUNCTION =====
+function printSlip(){
+  if(!currentTeacher) return;
+  const printArea = document.getElementById("printArea");
+  const outputContent = document.getElementById("output").innerHTML;
+  printArea.innerHTML = `<h2 style="text-align:center;">আল হেরা ইসলামী একাডেমী ও মাদ্রাসা<br>শিক্ষক আইডি যাচাইকরণ</h2>` + outputContent;
+  printArea.style.display = 'block';
+  window.print();
+  printArea.style.display = 'none';
+}
+
+// ===== PDF FUNCTION (Bengali support) =====
+function downloadPDF(){
+  if(!currentTeacher) return;
+  const doc = new jsPDF();
+  doc.setFont("helvetica"); // simple font fallback for mobile
+  let y=20;
+  doc.setFontSize(16);
+  doc.text("আল হেরা ইসলামী একাডেমী ও মাদ্রাসা",105,y,{align:"center"}); y+=10;
+  doc.text("শিক্ষক আইডি যাচাইকরণ",105,y,{align:"center"}); y+=12;
+  doc.setFontSize(12);
+  doc.text(`ID: ${currentTeacher.id}`,20,y); y+=8;
+  doc.text(`নাম: ${currentTeacher.name}`,20,y); y+=8;
+  doc.text(`পদবী: ${currentTeacher.designation}`,20,y); y+=8;
+  doc.text(`যোগদানের তারিখ: ${currentTeacher.joinDate}`,20,y); y+=8;
+  doc.text(`চাকরির বয়স: ${serviceAge(currentTeacher.joinDate)}`,20,y); y+=8;
+  doc.text(`মোবাইল: ${currentTeacher.mobile}`,20,y); y+=8;
+  doc.text(`বর্তমান অবস্থা: ${currentTeacher.active?'কর্মরত':'কর্মরত নয়'}`,20,y); y+=8;
+  doc.text(`ভেরিফিকেশনের তারিখ ও সময়: ${currentTimestamp}`,20,y); y+=15;
+  doc.save(`Teacher_Verification_${currentTeacher.id}.pdf`);
+}
+</script>
+</body>
+</html>
