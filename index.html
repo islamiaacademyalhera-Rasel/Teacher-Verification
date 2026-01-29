@@ -7,12 +7,16 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
 <style>
 body{ font-family: Arial, sans-serif; background:#f5f6fa; padding:20px; margin:0;}
-.container{ max-width:600px; margin:auto; background:#fff; padding:20px; border-radius:10px; box-shadow:0 4px 15px rgba(0,0,0,.1); }
+.container{ max-width:650px; margin:auto; background:#fff; padding:20px; border-radius:10px; box-shadow:0 4px 15px rgba(0,0,0,.1); }
+header{ text-align:center; margin-bottom:15px; }
+header h1{ margin:5px 0; font-size:20px; color:#0b5ed7; }
+header p{ margin:2px 0; font-size:14px; color:#555; }
+header a{ color:#0b5ed7; text-decoration:none; }
 input,button{ width:100%; padding:10px; margin-top:10px; font-size:16px; border-radius:5px; border:1px solid #ccc; box-sizing:border-box; }
 button{ background:#0b5ed7; color:#fff; border:none; cursor:pointer; transition:0.3s; }
 button:hover{ background:#084298; }
 .result{ margin-top:20px; padding:15px; border-radius:8px; background:#f1f1f1; min-height:200px; word-wrap: break-word; }
-.verified-title{ font-family: monospace; font-size:22px; font-weight:bold; color:#28a745; overflow:hidden; white-space:nowrap; border-right: .15em solid #28a745; }
+.verified-title{ font-family: monospace; font-size:22px; font-weight:bold; color:#28a745; overflow:hidden; white-space:nowrap; border-right: .15em solid #28a745; text-align:center; display:block; }
 table{ width:100%; border-collapse: collapse; margin-top:15px; }
 table th, table td{ border:1px solid #ddd; padding:10px; text-align:left; font-size:14px;}
 table th{ background:#0b5ed7; color:#fff; }
@@ -20,7 +24,9 @@ table th{ background:#0b5ed7; color:#fff; }
 .inactive{color:red;font-weight:bold;}
 .action-btns{ margin-top:15px; display:flex; gap:10px; flex-wrap:wrap;}
 .action-btns button{ flex:1; font-size:15px; }
-.timestamp{ margin-top:10px; font-size:13px; color:#555; font-style:italic; }
+.timestamp{ margin-top:10px; font-size:13px; color:#555; font-style:italic; text-align:center; }
+footer{ text-align:center; margin-top:20px; font-size:13px; color:#555; }
+footer a{ color:#0b5ed7; text-decoration:none; }
 
 /* PRINT STYLES */
 @media print {
@@ -28,18 +34,36 @@ table th{ background:#0b5ed7; color:#fff; }
   #printArea, #printArea * { visibility: visible; }
   #printArea { position: absolute; top:0; left:0; width:100%; }
 }
+
+/* Responsive adjustments */
+@media(max-width:480px){
+  .container{ padding:15px; }
+  table th, table td{ font-size:12px; padding:8px; }
+  input, button{ font-size:14px; padding:8px; }
+  .verified-title{ font-size:18px; }
+}
 </style>
 </head>
 <body>
 
 <div class="container">
-  <h3>Teacher Verification Slip</h3>
+  <header>
+    <h1>আল হেরা ইসলামী একাডেমী ও মাদ্রাসা</h1>
+    <p>সীম্যান ম্যানসন, বেপজা স্কুল গেটের উত্তর পাশে, রেলবিট সংলগ্ন, বন্দরটিলা, চট্টগ্রাম</p>
+    <p>মোবাইল: <a href="tel:+8801643880075">01643880075</a></p>
+  </header>
+
+  <h3 style="text-align:center;">Teacher Verification Slip</h3>
   <input type="text" id="teacherId" placeholder="Teacher ID লিখুন">
   <button onclick="verifyTeacher()">Verify</button>
   <div id="output" class="result">🔹 এখানে Teacher ID লিখে Verify করুন</div>
 </div>
 
 <div id="printArea" style="display:none;"></div> <!-- Printable area -->
+
+<footer>
+  This page is Developed by <a href="https://www.facebook.com/Sahidujjamanr" target="_blank">Sahidujjaman Rasel</a>
+</footer>
 
 <script>
 const { jsPDF } = window.jspdf;
@@ -99,7 +123,7 @@ function verifyTeacher(){
         <tr><td>পদবী</td><td>${t.designation}</td></tr>
         <tr><td>যোগদানের তারিখ</td><td>${t.joinDate}</td></tr>
         <tr><td>চাকরির বয়স</td><td>${serviceAge(t.joinDate)}</td></tr>
-        <tr><td>মোবাইল</td><td>${t.mobile}</td></tr>
+        <tr><td>মোবাইল</td><td><a href="tel:${t.mobile}">${t.mobile}</a></td></tr>
         <tr><td>বর্তমান অবস্থা</td><td class="${t.active?'active':'inactive'}">${t.active?'কর্মরত':'কর্মরত নয়'}</td></tr>
       </table>
       <div class="timestamp">ভেরিফিকেশনের তারিখ ও সময়: ${currentTimestamp}</div>
@@ -115,18 +139,29 @@ function verifyTeacher(){
 function printSlip(){
   if(!currentTeacher) return;
   const printArea = document.getElementById("printArea");
-  const outputContent = document.getElementById("output").innerHTML;
-  printArea.innerHTML = `<h2 style="text-align:center;">আল হেরা ইসলামী একাডেমী ও মাদ্রাসা<br>শিক্ষক আইডি যাচাইকরণ</h2>` + outputContent;
+  // হেডারসহ পুরো টেবিল প্রিন্ট হবে
+  printArea.innerHTML = `
+    <header style="text-align:center;">
+      <h1>আল হেরা ইসলামী একাডেমী ও মাদ্রাসা</h1>
+      <p>সীম্যান ম্যানসন, বেপজা স্কুল গেটের উত্তর পাশে, রেলবিট সংলগ্ন, বন্দরটিলা, চট্টগ্রাম</p>
+      <p>মোবাইল: <a href="tel:+8801643880075">01643880075</a></p>
+    </header>
+    <h3 style="text-align:center;">Teacher Verification Slip</h3>
+    ${document.getElementById("output").innerHTML}
+    <footer style="text-align:center; margin-top:20px; font-size:13px; color:#555;">
+      This page is Developed by <a href="https://www.facebook.com/Sahidujjamanr" target="_blank">Sahidujjaman Rasel</a>
+    </footer>
+  `;
   printArea.style.display = 'block';
   window.print();
   printArea.style.display = 'none';
 }
 
-// ===== PDF FUNCTION (Bengali support) =====
+// ===== PDF FUNCTION =====
 function downloadPDF(){
   if(!currentTeacher) return;
   const doc = new jsPDF();
-  doc.setFont("helvetica"); // simple font fallback for mobile
+  doc.setFont("helvetica");
   let y=20;
   doc.setFontSize(16);
   doc.text("আল হেরা ইসলামী একাডেমী ও মাদ্রাসা",105,y,{align:"center"}); y+=10;
